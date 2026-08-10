@@ -163,7 +163,42 @@ async def run_query_pipeline(
         return
 
     # ------------------------------------------------------------------
-    # Stage 1b – CACHE LOOKUP (before hitting the LLM)
+    # Stage 1b – SESSION VALIDATION (when session_id is supplied)
+    # ------------------------------------------------------------------
+    error_stage = PipelineStage.RECEIVED
+    if request.session_id is not None:
+        try:
+            chat_session = await _session_repo.get_active_by_id(app_db, request.session_id)
+            if chat_session is None:
+                yield _sse_frame(StreamEvent(
+                    stage=PipelineStage.ERROR,
+                    elapsed_ms=elapsed(),
+                    data=ErrorPayload(
+                        stage=error_stage,
+                        code="SESSION_NOT_FOUND",
+                        message=(
+                            f"Chat session {request.session_id} does not exist or has been deleted. "
+                            "Create a session via POST /api/v1/chat/sessions first."
+                        ),
+                    ).model_dump(mode="json"),
+                ))
+                return
+        except Exception as exc:
+            logger.error("Session validation failed.", exc_info=exc)
+            yield _sse_frame(StreamEvent(
+                stage=PipelineStage.ERROR,
+                elapsed_ms=elapsed(),
+                data=ErrorPayload(
+                    stage=error_stage,
+                    code="SESSION_VALIDATION_ERROR",
+                    message="An error occurred while validating the chat session.",
+                    detail=str(exc) if settings.DEBUG else "",
+                ).model_dump(mode="json"),
+            ))
+            return
+
+    # ------------------------------------------------------------------
+    # Stage 1c – CACHE LOOKUP (before hitting the LLM)
     # ------------------------------------------------------------------
     if settings.CACHE_ENABLED:
         try:
