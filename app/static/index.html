@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB-ChatBot — AI Database Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">DB-ChatBot</span>
+                </div>
+                <button id="btn-new-chat" class="btn-primary">+ New Chat</button>
+            </div>
+            
+            <div class="sessions-section">
+                <div class="section-title">Chat Sessions</div>
+                <ul id="sessions-list" class="sessions-list">
+                    <!-- Session items populated by app.js -->
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="btn-open-connect" class="btn-secondary">
+                    <span>🔌</span> Manage Connection
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-bar">
+                <div class="connection-status">
+                    <span id="status-dot" class="dot dot-red"></span>
+                    <span id="status-text">Disconnected</span>
+                    <span id="connection-info" class="connection-info"></span>
+                </div>
+                <div class="top-actions">
+                    <a href="/docs" target="_blank" class="nav-link">Swagger API Docs ↗</a>
+                </div>
+            </header>
+
+            <!-- Chat Scroll Container -->
+            <div id="chat-messages" class="chat-messages">
+                <!-- Welcome Banner -->
+                <div class="welcome-card">
+                    <div class="welcome-icon">🤖</div>
+                    <h2>Database Chatbot Assistant</h2>
+                    <p>Ask natural language questions about your connected database. The AI generates safe SQL queries, executes them live, and streams formatted results.</p>
+                    
+                    <div class="sample-queries">
+                        <div class="sample-title">Try asking:</div>
+                        <button class="chip" data-query="Show me all database connections">"Show me all database connections"</button>
+                        <button class="chip" data-query="How many chat sessions are in the database?">"How many chat sessions are in the database?"</button>
+                        <button class="chip" data-query="Show active chat sessions ordered by created_at descending">"Show active chat sessions ordered by created_at descending"</button>
+                        <button class="chip" data-query="Group chat messages by role and count total for each role">"Group chat messages by role and count total for each role"</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Bar Area -->
+            <div class="input-container">
+                <form id="chat-form" class="chat-form">
+                    <input 
+                        type="text" 
+                        id="chat-input" 
+                        placeholder="Type a question about your database..." 
+                        autocomplete="off"
+                        required
+                    />
+                    <button type="submit" id="btn-send" class="btn-send">
+                        <span>Send</span> ➔
+                    </button>
+                </form>
+                <div class="input-footer">
+                    <span>Queries are validated against 8 SQL safety rules (SELECT-only).</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Connection Modal -->
+    <div id="connect-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🔌 Connect to Database</h3>
+                <button id="btn-close-modal" class="modal-close">&times;</button>
+            </div>
+            <form id="connect-form" class="connect-form">
+                <div class="form-group">
+                    <label>Database Type</label>
+                    <select id="db-type" class="form-control">
+                        <option value="postgresql" selected>PostgreSQL</option>
+                        <option value="mysql">MySQL</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-2">
+                        <label>Host</label>
+                        <input type="text" id="db-host" class="form-control" value="db" required />
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Port</label>
+                        <input type="number" id="db-port" class="form-control" value="5432" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Database Name</label>
+                    <input type="text" id="db-name" class="form-control" value="chatbot_db" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="db-user" class="form-control" value="postgres" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="db-pass" class="form-control" value="HUssain@12" required />
+                    </div>
+                </div>
+                
+                <div id="connect-error" class="form-error hidden"></div>
+
+                <div class="modal-actions">
+                    <button type="button" id="btn-cancel-modal" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="btn-submit-connect" class="btn-primary">Connect Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -74,6 +74,19 @@ def create_app() -> FastAPI:
     # Mount API Router
     app_instance.include_router(api_router)
 
+    # Mount Static Files for Web Frontend UI
+    import os
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    if os.path.exists(static_dir):
+        app_instance.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+        @app_instance.get("/", include_in_schema=False)
+        async def serve_index():
+            return FileResponse(os.path.join(static_dir, "index.html"))
+
     return app_instance
 
 
