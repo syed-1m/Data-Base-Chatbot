@@ -387,7 +387,18 @@ async def run_query_pipeline(
         confidence = float(parsed_json.get("confidence", 0.0))
 
         if not raw_sql:
-            raise ValueError("LLM response contained an empty SQL field.")
+            err_msg = reasoning or "The AI model could not generate SQL for this question because the required tables/columns do not exist in the connected database."
+            yield _sse_frame(StreamEvent(
+                stage=PipelineStage.ERROR,
+                elapsed_ms=elapsed(),
+                data=ErrorPayload(
+                    stage=error_stage,
+                    code="UNANSWERABLE_QUERY",
+                    message=err_msg,
+                    detail=reasoning,
+                ).model_dump(mode="json"),
+            ))
+            return
 
     except Exception as exc:
         logger.error("SQL generation failed.", exc_info=exc)

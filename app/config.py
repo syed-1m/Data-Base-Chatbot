@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "HUssain@12"
     POSTGRES_DB: str = "chatbot_db"
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:HUssain@12@localhost:5432/chatbot_db"
-    DATABASE_URL_SYNC: str = "postgresql+psycopg2://postgres:HUssain@12@localhost:5432/chatbot_db"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:HUssain%4012@localhost:5432/chatbot_db"
+    DATABASE_URL_SYNC: str = "postgresql+psycopg2://postgres:HUssain%4012@localhost:5432/chatbot_db"
 
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     AI_PROVIDER: Literal["gemini", "openai"] = Field(default="gemini")
     GEMINI_API_KEY: str = Field(default="")
     OPENAI_API_KEY: str = Field(default="")
-    AI_MODEL: str = Field(default="gemini-1.5-flash")
+    AI_MODEL: str = Field(default="gemini-flash-latest")
     AI_TEMPERATURE: float = Field(default=0.1)
     AI_MAX_OUTPUT_TOKENS: int = Field(default=2048)
     AI_MAX_RETRIES: int = Field(default=3)

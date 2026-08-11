@@ -467,7 +467,11 @@ class CacheService:
         # 2. Load candidates (try Redis first, then PG)
         candidates: list[tuple[str, np.ndarray]] = []
         backend = "miss"
-        r = await _get_redis()
+        r = None
+        try:
+            r = await _get_redis()
+        except Exception as exc:
+            logger.warning("Redis client lookup failed: %s", exc)
 
         if r is not None:
             try:
@@ -608,7 +612,11 @@ class CacheService:
             expires_at=_ttl_expires_at().isoformat(),
         )
 
-        r = await _get_redis()
+        r = None
+        try:
+            r = await _get_redis()
+        except Exception as exc:
+            logger.warning("Redis client get failed during store: %s", exc)
 
         # Write to Redis
         if r is not None:
@@ -643,7 +651,11 @@ class CacheService:
     ) -> CacheMetrics:
         """Return hit/miss metrics for a connection."""
         metrics = CacheMetrics(connection_id=connection_id)
-        r = await _get_redis()
+        r = None
+        try:
+            r = await _get_redis()
+        except Exception:
+            pass
 
         if r is not None:
             try:
@@ -683,7 +695,11 @@ class CacheService:
         Returns the number of entries invalidated.
         """
         count = 0
-        r = await _get_redis()
+        r = None
+        try:
+            r = await _get_redis()
+        except Exception:
+            pass
 
         if cache_key:
             # Single entry invalidation

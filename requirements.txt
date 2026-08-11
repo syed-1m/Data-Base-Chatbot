@@ -67,5 +67,5 @@ sqlparse==0.5.1              # SQL parsing, validation, and formatting
 # ---------------------------------------------------------------------------
 redis==5.2.1                 # Async Redis client (redis.asyncio)
 numpy==2.2.3                 # Vectorised cosine similarity
-scikit-learn==1.6.1          # (optional) additional ML utilities
-sentence-transformers==3.4.1 # Sentence embedding model (all-MiniLM-L6-v2)
+# scikit-learn==1.6.1          # (optional) additional ML utilities
+# sentence-transformers==3.4.1 # Sentence embedding model (all-MiniLM-L6-v2) - disabled for fast Docker build
