@@ -376,12 +376,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 break;
             case 'generating_sql':
-                assistantCard.updateStep('llm', 'active', 'Generating SQL...');
-                if (data.provider) {
-                    assistantCard.updateStep('llm', 'complete', `SQL Generated (${data.provider})`);
-                }
+                assistantCard.provider = data.provider || 'gemini';
+                assistantCard.updateStep('llm', 'active', `Generating SQL (${assistantCard.provider})...`);
                 break;
             case 'validating_sql':
+                assistantCard.updateStep('llm', 'complete', `SQL Generated (${assistantCard.provider || 'gemini'})`);
                 assistantCard.updateStep('val', 'complete', 'SQL Security Passed (8 checks)');
                 break;
             case 'executing':
@@ -392,8 +391,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadSessions(); // Refresh session sidebar title
                 break;
             case 'error':
-                assistantCard.updateStep('err', 'error', data.code || 'Error');
-                assistantCard.updateError(data.message || 'An error occurred during pipeline execution.');
+                if (data.stage === 'generating_sql' || data.code === 'SQL_GENERATION_FAILED') {
+                    assistantCard.updateStep('llm', 'error', 'SQL Generation Failed');
+                } else if (data.stage === 'validating_sql' || data.code === 'SQL_VALIDATION_FAILED') {
+                    assistantCard.updateStep('val', 'error', 'SQL Validation Failed');
+                } else {
+                    assistantCard.updateStep('err', 'error', data.code || 'Error');
+                }
+                const errorDisplay = data.detail && data.detail !== data.message
+                    ? `${data.message}\n${data.detail}`
+                    : (data.message || 'An error occurred during pipeline execution.');
+                assistantCard.updateError(errorDisplay);
                 break;
         }
         scrollToBottom();

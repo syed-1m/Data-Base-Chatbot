@@ -53,7 +53,7 @@ from app.ai.prompt_templates import NL_TO_SQL_SYSTEM_PROMPT, build_nl_to_sql_pro
 from app.ai.schema_extractor import SchemaExtractor
 from app.ai.sql_validator import SQLValidator
 from app.cache.cache_service import CacheLookupResult, cache_service
-from app.config import settings
+from app.config import get_settings, settings
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.logger import get_logger
 from app.models.chat_session import MessageRole
@@ -344,8 +344,9 @@ async def run_query_pipeline(
 
     try:
         llm_client = get_llm_client()
-        provider = settings.AI_PROVIDER
-        model = settings.AI_MODEL
+        cfg = get_settings()
+        provider = cfg.AI_PROVIDER
+        model = cfg.AI_MODEL
 
         # Fetch recent conversation history for context if session supplied
         history: list[dict] = []
@@ -402,14 +403,22 @@ async def run_query_pipeline(
 
     except Exception as exc:
         logger.error("SQL generation failed.", exc_info=exc)
+        err_str = str(exc)
+        if any(k in err_str for k in ("API key", "API_KEY", "not configured", "invalid or placeholder", "400 API key", "DefaultCredentialsError")):
+            user_msg = "Gemini API key is missing or invalid. Please configure a valid GEMINI_API_KEY in your .env file."
+        elif "404" in err_str or "not found" in err_str.lower():
+            user_msg = f"Google AI API returned 404 for model '{settings.AI_MODEL}'. This usually indicates your GEMINI_API_KEY in .env is invalid or not authorized for the Gemini API."
+        else:
+            user_msg = "The AI model failed to generate a SQL query."
+
         yield _sse_frame(StreamEvent(
             stage=PipelineStage.ERROR,
             elapsed_ms=elapsed(),
             data=ErrorPayload(
                 stage=error_stage,
                 code="SQL_GENERATION_FAILED",
-                message="The AI model failed to generate a SQL query.",
-                detail=str(exc),
+                message=user_msg,
+                detail=err_str,
             ).model_dump(mode="json"),
         ))
         return

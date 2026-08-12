@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     AI_PROVIDER: Literal["gemini", "openai"] = Field(default="gemini")
     GEMINI_API_KEY: str = Field(default="")
     OPENAI_API_KEY: str = Field(default="")
-    AI_MODEL: str = Field(default="gemini-flash-latest")
+    AI_MODEL: str = Field(default="gemini-flash-lite-latest")
     AI_TEMPERATURE: float = Field(default=0.1)
     AI_MAX_OUTPUT_TOKENS: int = Field(default=2048)
     AI_MAX_RETRIES: int = Field(default=3)
@@ -77,7 +77,6 @@ class Settings(BaseSettings):
     )
 
 
-@lru_cache
 def get_settings() -> Settings:
     return Settings()
 

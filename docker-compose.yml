@@ -64,6 +64,8 @@ services:
       target: runtime
     container_name: db_chatbot_app
     restart: unless-stopped
+    env_file:
+      - .env
     command: >
       uvicorn app.main:app
         --host 0.0.0.0
@@ -90,8 +92,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-this-32ch}
       LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
       AI_PROVIDER: ${AI_PROVIDER:-gemini}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-gemini-flash-latest}
+      AI_MODEL: gemini-flash-lite-latest
       CACHE_ENABLED: ${CACHE_ENABLED:-True}
       REDIS_URL: redis://redis:6379/0
       CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-86400}

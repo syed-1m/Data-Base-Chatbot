@@ -75,27 +75,47 @@ def _extract_json(text: str) -> dict[str, Any] | None:
     return None
 
 
+from app.config import get_settings, settings
+
+
 class GeminiClient:
     def __init__(self) -> None:
         import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        cfg = get_settings()
+        key = cfg.GEMINI_API_KEY.strip()
+        if key:
+            genai.configure(api_key=key)
         self._genai = genai
 
     async def generate(self, user_prompt: str, system_prompt: str | None = None) -> LLMResponse:
+        cfg = get_settings()
+        key = cfg.GEMINI_API_KEY.strip()
+        if not key or key.startswith("your-"):
+            raise ValueError("GEMINI_API_KEY in .env is not configured. Please set a valid Gemini API key in your .env file.")
+
         import google.generativeai as genai
         from google.generativeai.types import GenerationConfig
 
-        model = genai.GenerativeModel(
-            model_name=settings.AI_MODEL,
-            system_instruction=system_prompt,
-            generation_config=GenerationConfig(
-                temperature=settings.AI_TEMPERATURE,
-                max_output_tokens=settings.AI_MAX_OUTPUT_TOKENS,
+        genai.configure(api_key=key)
+
+        model_kwargs = {
+            "model_name": cfg.AI_MODEL,
+            "generation_config": GenerationConfig(
+                temperature=cfg.AI_TEMPERATURE,
+                max_output_tokens=cfg.AI_MAX_OUTPUT_TOKENS,
             ),
-        )
+        }
+        full_user_prompt = user_prompt
+        if system_prompt:
+            if "1.0" in cfg.AI_MODEL or cfg.AI_MODEL == "gemini-pro":
+                full_user_prompt = f"System Instructions:\n{system_prompt}\n\nUser Request:\n{user_prompt}"
+            else:
+                model_kwargs["system_instruction"] = system_prompt
+
+        model = genai.GenerativeModel(**model_kwargs)
 
         start = time.perf_counter()
-        response = await model.generate_content_async(user_prompt)
+        response = await model.generate_content_async(full_user_prompt)
         latency_ms = (time.perf_counter() - start) * 1000
 
         content = response.text if response.text else ""
@@ -110,18 +130,21 @@ class GeminiClient:
             parsed_json=parsed,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
-            model=settings.AI_MODEL,
+            model=cfg.AI_MODEL,
             finish_reason="stop",
             latency_ms=round(latency_ms, 1),
         )
 
 
+
 class OpenAIClient:
     def __init__(self) -> None:
         import openai
-        self._client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        cfg = get_settings()
+        self._client = openai.AsyncOpenAI(api_key=cfg.OPENAI_API_KEY)
 
     async def generate(self, user_prompt: str, system_prompt: str | None = None) -> LLMResponse:
+        cfg = get_settings()
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -129,10 +152,10 @@ class OpenAIClient:
 
         start = time.perf_counter()
         response = await self._client.chat.completions.create(
-            model=settings.AI_MODEL,
+            model=cfg.AI_MODEL,
             messages=messages,
-            temperature=settings.AI_TEMPERATURE,
-            max_tokens=settings.AI_MAX_OUTPUT_TOKENS,
+            temperature=cfg.AI_TEMPERATURE,
+            max_tokens=cfg.AI_MAX_OUTPUT_TOKENS,
             response_format={"type": "json_object"},
         )
         latency_ms = (time.perf_counter() - start) * 1000
@@ -145,14 +168,15 @@ class OpenAIClient:
             parsed_json=_extract_json(content),
             input_tokens=usage.prompt_tokens if usage else 0,
             output_tokens=usage.completion_tokens if usage else 0,
-            model=settings.AI_MODEL,
+            model=cfg.AI_MODEL,
             finish_reason=response.choices[0].finish_reason or "stop",
             latency_ms=round(latency_ms, 1),
         )
 
 
 def get_llm_client() -> GeminiClient | OpenAIClient:
-    provider = settings.AI_PROVIDER.lower()
+    cfg = get_settings()
+    provider = cfg.AI_PROVIDER.lower()
     if provider == "gemini":
         return GeminiClient()
     elif provider == "openai":
